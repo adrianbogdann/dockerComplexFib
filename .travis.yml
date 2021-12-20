@@ -1,0 +1,25 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t adrianbogdann/complex-fib -f ./client/Dockerfile.dev ./client
+
+scripts: 
+# if any of the scripts here exit with a status code other than 0
+# travis will assume the build failed
+  - docker run -e CI=true adrianbogdann/complex-fib npm test
+
+after_success: 
+  - docker build -t adrianbogdann/multi-client ./client
+  - docker build -t adrianbogdann/multi-nginx ./nginx
+  - docker build -t adrianbogdann/multi-server ./server
+  - docker build -t adrianbogdann/multi-worker ./worker
+  # Log into docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push adrianbogdann/multi-client
+  - docker push adrianbogdann/multi-nginx
+  - docker push adrianbogdann/multi-server
+  - docker push adrianbogdann/multi-worker
